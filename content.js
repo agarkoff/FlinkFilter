@@ -1,3 +1,5 @@
+let proezdJobSorted = false;
+
 // Проверяем, является ли страница Apache Flink Dashboard
 function isFlinkDashboard() {
   return document.title.includes('Flink') || 
@@ -9,24 +11,26 @@ function isFlinkDashboard() {
 function filterProezdJobs() {
   // Ищем все таблицы на странице
   const tables = document.querySelectorAll('table');
-  
+
   tables.forEach(table => {
     const rows = table.querySelectorAll('tr');
-    
-    // Находим заголовок таблицы для определения колонки с именем job
+
+    // Находим заголовок таблицы для определения колонки с именем job и индекс
     let jobNameColumnIndex = -1;
+    let jobNameHeader = null;
     const headerRow = rows[0];
-    
+
     if (headerRow) {
       const headers = headerRow.querySelectorAll('th, td');
       headers.forEach((header, index) => {
         const headerText = header.textContent.toLowerCase();
         if (headerText.includes('job') && (headerText.includes('name') || headerText.includes('название'))) {
           jobNameColumnIndex = index;
+          jobNameHeader = header; // Сохраняем ссылку на <th>/<td>
         }
       });
     }
-    
+
     // Если не нашли колонку по заголовку, пробуем угадать по содержимому
     if (jobNameColumnIndex === -1 && rows.length > 1) {
       const firstDataRow = rows[1];
@@ -38,18 +42,19 @@ function filterProezdJobs() {
           if (cellText.includes(':') || cellText.includes('.')) {
             jobNameColumnIndex = index;
             return;
+            // Не можем получить header, если его нет, пропускаем сортировку далее
           }
         });
       }
     }
-    
+
     // Фильтруем строки
     rows.forEach((row, rowIndex) => {
       if (rowIndex === 0) return; // Пропускаем заголовок
-      
+
       const cells = row.querySelectorAll('td');
       let shouldShow = false;
-      
+
       if (jobNameColumnIndex >= 0 && cells[jobNameColumnIndex]) {
         // Проверяем конкретную колонку
         const jobName = cells[jobNameColumnIndex].textContent;
@@ -62,7 +67,7 @@ function filterProezdJobs() {
           }
         });
       }
-      
+
       // Скрываем или показываем строку
       if (shouldShow) {
         row.style.display = '';
@@ -72,8 +77,17 @@ function filterProezdJobs() {
         row.classList.add('proezd-hidden');
       }
     });
+
+    // <<< ДОБАВЛЕНО: клик по заголовку для сортировки >>>
+    if (jobNameHeader && !proezdJobSorted) {
+      // эмулируем клик только один раз
+      setTimeout(() => {
+        jobNameHeader.click();
+        proezdJobSorted = true;
+      }, 0);
+    }
   });
-  
+
   // Добавляем индикатор фильтрации
   addFilterIndicator();
 }
