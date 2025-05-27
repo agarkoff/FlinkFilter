@@ -101,8 +101,8 @@ function addFilterIndicator() {
   indicator.innerHTML = `
     <div style="
       position: fixed;
-      top: 10px;
-      right: 10px;
+      bottom: 10px;
+      left: 10px;
       background: #4CAF50;
       color: white;
       padding: 10px 15px;
