@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Flink Dashboard Proezd Filter",
+  "version": "1.0",
+  "description": "Фильтрует таблицу Apache Flink Dashboard, показывая только задачи с ':proezd:' в названии",
+  "permissions": [
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Flink Proezd Filter"
+  }
+}

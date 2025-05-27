@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 300px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .description {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #333;
+            margin-top: 15px;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.inactive {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🔍</div>
+        <div class="title">Flink Proezd Filter</div>
+    </div>
+    
+    <div class="description">
+        Фильтрует таблицу Apache Flink Dashboard, показывая только задачи с подстрокой ":proezd:" в названии
+    </div>
+    
+    <div id="status" class="status inactive">
+        Фильтр неактивен
+    </div>
+    
+    <button id="toggleFilter" class="button">
+        Включить фильтр
+    </button>
+    
+    <div class="info">
+        <strong>Как использовать:</strong><br>
+        1. Откройте Apache Flink Dashboard<br>
+        2. Нажмите "Включить фильтр"<br>
+        3. В таблице останутся только строки с ":proezd:" в названии задачи
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('toggleFilter');
+            const statusDiv = document.getElementById('status');
+            
+            // Проверяем текущее состояние фильтра
+            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                chrome.tabs.sendMessage(tabs[0].id, {action: 'get_status'}, function(response) {
+                    // Если нет ответа, значит контент скрипт не загружен или фильтр неактивен
+                    updateUI(false);
+                });
+            });
+            
+            toggleButton.addEventListener('click', function() {
+                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {action: 'toggle_filter'}, function(response) {
+                        if (response && response.status === 'success') {
+                            // Переключаем состояние UI
+                            const isActive = statusDiv.classList.contains('inactive');
+                            updateUI(isActive);
+                        }
+                    });
+                });
+            });
+            
+            function updateUI(isActive) {
+                if (isActive) {
+                    statusDiv.textContent = 'Фильтр активен';
+                    statusDiv.className = 'status active';
+                    toggleButton.textContent = 'Отключить фильтр';
+                } else {
+                    statusDiv.textContent = 'Фильтр неактивен';
+                    statusDiv.className = 'status inactive';
+                    toggleButton.textContent = 'Включить фильтр';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
