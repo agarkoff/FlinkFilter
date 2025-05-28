@@ -1,10 +1,11 @@
 let proezdJobSorted = false;
+let filterActive = false; // Добавляем переменную для отслеживания состояния фильтра
 
 // Проверяем, является ли страница Apache Flink Dashboard
 function isFlinkDashboard() {
-  return document.title.includes('Flink') || 
-         document.querySelector('[class*="flink"]') || 
-         document.querySelector('table') && window.location.href.includes('8081');
+  return document.title.includes('Flink') ||
+      document.querySelector('[class*="flink"]') ||
+      document.querySelector('table') && window.location.href.includes('8081');
 }
 
 // Функция для фильтрации таблицы
@@ -88,6 +89,8 @@ function filterProezdJobs() {
     }
   });
 
+  // Устанавливаем состояние фильтра как активное
+  filterActive = true;
   // Добавляем индикатор фильтрации
   addFilterIndicator();
 }
@@ -95,7 +98,7 @@ function filterProezdJobs() {
 // Добавляем индикатор того, что фильтр активен
 function addFilterIndicator() {
   if (document.getElementById('proezd-filter-indicator')) return;
-  
+
   const indicator = document.createElement('div');
   indicator.id = 'proezd-filter-indicator';
   indicator.innerHTML = `
@@ -124,9 +127,9 @@ function addFilterIndicator() {
       ">Сбросить</button>
     </div>
   `;
-  
+
   document.body.appendChild(indicator);
-  
+
   // Добавляем обработчик для кнопки сброса
   document.getElementById('clear-proezd-filter').addEventListener('click', clearFilter);
 }
@@ -141,24 +144,27 @@ function clearFilter() {
       row.classList.remove('proezd-filtered', 'proezd-hidden');
     });
   });
-  
+
   const indicator = document.getElementById('proezd-filter-indicator');
   if (indicator) {
     indicator.remove();
   }
+
+  // Устанавливаем состояние фильтра как неактивное
+  filterActive = false;
 }
 
 // Функция для отслеживания изменений в DOM
 function observeChanges() {
   const observer = new MutationObserver((mutations) => {
     let shouldRefilter = false;
-    
+
     mutations.forEach((mutation) => {
       if (mutation.type === 'childList') {
         // Проверяем, добавились ли новые таблицы или строки
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.tagName === 'TABLE' || node.querySelector('table') || 
+            if (node.tagName === 'TABLE' || node.querySelector('table') ||
                 node.tagName === 'TR' || node.querySelector('tr')) {
               shouldRefilter = true;
             }
@@ -166,12 +172,12 @@ function observeChanges() {
         });
       }
     });
-    
-    if (shouldRefilter && document.getElementById('proezd-filter-indicator')) {
+
+    if (shouldRefilter && filterActive) {
       setTimeout(filterProezdJobs, 100); // Небольшая задержка для завершения загрузки
     }
   });
-  
+
   observer.observe(document.body, {
     childList: true,
     subtree: true
@@ -206,6 +212,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else {
       filterProezdJobs();
     }
-    sendResponse({status: 'success'});
+    sendResponse({status: 'success', filterActive: filterActive});
+  }
+  // Добавляем обработчик для получения статуса фильтра
+  else if (request.action === 'get_status') {
+    sendResponse({filterActive: filterActive});
   }
 });
