@@ -1,5 +1,6 @@
 let proezdJobSorted = false;
 let filterActive = false; // Добавляем переменную для отслеживания состояния фильтра
+let currentFilterValue = ':proezd:'; // Добавляем переменную для хранения текущего значения фильтра
 
 // Проверяем, является ли страница Apache Flink Dashboard
 function isFlinkDashboard() {
@@ -9,7 +10,10 @@ function isFlinkDashboard() {
 }
 
 // Функция для фильтрации таблицы
-function filterProezdJobs() {
+function filterProezdJobs(filterValue = currentFilterValue) {
+  // Обновляем текущее значение фильтра
+  currentFilterValue = filterValue;
+
   // Ищем все таблицы на странице
   const tables = document.querySelectorAll('table');
 
@@ -59,11 +63,11 @@ function filterProezdJobs() {
       if (jobNameColumnIndex >= 0 && cells[jobNameColumnIndex]) {
         // Проверяем конкретную колонку
         const jobName = cells[jobNameColumnIndex].textContent;
-        shouldShow = jobName.includes(':proezd:');
+        shouldShow = jobName.includes(currentFilterValue);
       } else {
         // Если не нашли колонку, ищем по всем ячейкам
         cells.forEach(cell => {
-          if (cell.textContent.includes(':proezd:')) {
+          if (cell.textContent.includes(currentFilterValue)) {
             shouldShow = true;
           }
         });
@@ -115,7 +119,7 @@ function addFilterIndicator() {
       font-size: 14px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     ">
-      🔍 Фильтр :proezd: активен
+      🔍 Фильтр "${currentFilterValue}" активен
       <button id="clear-proezd-filter" style="
         margin-left: 10px;
         background: #45a049;
@@ -174,7 +178,7 @@ function observeChanges() {
     });
 
     if (shouldRefilter && filterActive) {
-      setTimeout(filterProezdJobs, 100); // Небольшая задержка для завершения загрузки
+      setTimeout(() => filterProezdJobs(currentFilterValue), 100); // Небольшая задержка для завершения загрузки
     }
   });
 
@@ -206,16 +210,32 @@ init();
 // Слушаем сообщения от popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'toggle_filter') {
+    const filterValue = request.filterValue || currentFilterValue;
     const indicator = document.getElementById('proezd-filter-indicator');
     if (indicator) {
       clearFilter();
     } else {
-      filterProezdJobs();
+      filterProezdJobs(filterValue);
     }
-    sendResponse({status: 'success', filterActive: filterActive});
+    sendResponse({status: 'success', filterActive: filterActive, filterValue: currentFilterValue});
   }
   // Добавляем обработчик для получения статуса фильтра
   else if (request.action === 'get_status') {
-    sendResponse({filterActive: filterActive});
+    sendResponse({filterActive: filterActive, filterValue: currentFilterValue});
+  }
+  // Добавляем обработчик для применения нового фильтра
+  else if (request.action === 'apply_filter') {
+    const filterValue = request.filterValue;
+    if (filterValue) {
+      // Сначала очищаем старый фильтр если он был активен
+      if (filterActive) {
+        clearFilter();
+      }
+      // Применяем новый фильтр
+      filterProezdJobs(filterValue);
+      sendResponse({status: 'success', filterActive: filterActive, filterValue: currentFilterValue});
+    } else {
+      sendResponse({status: 'error', message: 'Filter value is required'});
+    }
   }
 });

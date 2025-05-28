@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <style>
         body {
-            width: 300px;
+            width: 320px;
             padding: 20px;
             font-family: Arial, sans-serif;
         }
@@ -27,6 +27,29 @@
             margin-bottom: 20px;
             text-align: center;
         }
+        .filter-section {
+            margin-bottom: 15px;
+        }
+        .filter-label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+        .filter-input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
         .button {
             width: 100%;
             padding: 12px;
@@ -36,11 +59,17 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             transition: background 0.3s;
         }
         .button:hover {
             background: #45a049;
+        }
+        .button.secondary {
+            background: #2196F3;
+        }
+        .button.secondary:hover {
+            background: #1976D2;
         }
         .info {
             background: #f0f8ff;
@@ -55,7 +84,7 @@
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 15px;
-            font-size: 14px;
+            font-size: 13px;
         }
         .status.active {
             background: #d4edda;
@@ -67,33 +96,55 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .filter-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">🔍</div>
-        <div class="title">Flink Proezd Filter</div>
-    </div>
-    
-    <div class="description">
-        Фильтрует таблицу Apache Flink Dashboard, показывая только задачи с подстрокой ":proezd:" в названии
-    </div>
-    
-    <div id="status" class="status inactive">
-        Фильтр неактивен
-    </div>
-    
-    <button id="toggleFilter" class="button">
-        Включить фильтр
-    </button>
-    
-    <div class="info">
-        <strong>Как использовать:</strong><br>
-        1. Откройте Apache Flink Dashboard<br>
-        2. Нажмите "Включить фильтр"<br>
-        3. В таблице останутся только строки с ":proezd:" в названии задачи
-    </div>
+<div class="header">
+    <div class="logo">🔍</div>
+    <div class="title">Flink Proezd Filter</div>
+</div>
 
-    <script src="popup.js"></script>
+<div class="description">
+    Фильтрует таблицу Apache Flink Dashboard по заданной подстроке в названии задачи
+</div>
+
+<div id="status" class="status inactive">
+    Фильтр неактивен
+</div>
+
+<div class="filter-section">
+    <label class="filter-label" for="filterValue">Значение фильтра:</label>
+    <input
+            type="text"
+            id="filterValue"
+            class="filter-input"
+            placeholder="Введите подстроку для поиска..."
+            value=":proezd:"
+    />
+    <div class="filter-hint">Например: :proezd:, job-name, test</div>
+</div>
+
+<button id="applyFilter" class="button secondary">
+    Применить фильтр
+</button>
+
+<button id="toggleFilter" class="button">
+    Включить фильтр
+</button>
+
+<div class="info">
+    <strong>Как использовать:</strong><br>
+    1. Откройте Apache Flink Dashboard<br>
+    2. Введите подстроку для поиска<br>
+    3. Нажмите "Применить фильтр" или "Включить фильтр"<br>
+    4. В таблице останутся только строки с указанной подстрокой
+</div>
+
+<script src="popup.js"></script>
 </body>
 </html>
