@@ -2,6 +2,33 @@ let proezdJobSorted = false;
 let filterActive = false; // Добавляем переменную для отслеживания состояния фильтра
 let currentFilterValue = ':proezd:'; // Добавляем переменную для хранения текущего значения фильтра
 
+// Загружаем сохраненные настройки из storage
+async function loadSettings() {
+  try {
+    const result = await chrome.storage.local.get(['filterValue', 'filterActive']);
+    if (result.filterValue) {
+      currentFilterValue = result.filterValue;
+    }
+    if (result.filterActive !== undefined) {
+      filterActive = result.filterActive;
+    }
+  } catch (error) {
+    console.log('Error loading settings:', error);
+  }
+}
+
+// Сохраняем настройки в storage
+async function saveSettings() {
+  try {
+    await chrome.storage.local.set({
+      filterValue: currentFilterValue,
+      filterActive: filterActive
+    });
+  } catch (error) {
+    console.log('Error saving settings:', error);
+  }
+}
+
 // Проверяем, является ли страница Apache Flink Dashboard
 function isFlinkDashboard() {
   return document.title.includes('Flink') ||
@@ -95,6 +122,8 @@ function filterProezdJobs(filterValue = currentFilterValue) {
 
   // Устанавливаем состояние фильтра как активное
   filterActive = true;
+  // Сохраняем настройки
+  saveSettings();
   // Добавляем индикатор фильтрации
   addFilterIndicator();
 }
@@ -156,6 +185,8 @@ function clearFilter() {
 
   // Устанавливаем состояние фильтра как неактивное
   filterActive = false;
+  // Сохраняем настройки
+  saveSettings();
 }
 
 // Функция для отслеживания изменений в DOM
@@ -189,16 +220,29 @@ function observeChanges() {
 }
 
 // Основная функция инициализации
-function init() {
+async function init() {
   if (isFlinkDashboard()) {
+    // Загружаем сохраненные настройки
+    await loadSettings();
+
     // Ждем полной загрузки страницы
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(filterProezdJobs, 500);
+        setTimeout(() => {
+          // Если фильтр был активен, применяем его
+          if (filterActive) {
+            filterProezdJobs(currentFilterValue);
+          }
+        }, 500);
         observeChanges();
       });
     } else {
-      setTimeout(filterProezdJobs, 500);
+      setTimeout(() => {
+        // Если фильтр был активен, применяем его
+        if (filterActive) {
+          filterProezdJobs(currentFilterValue);
+        }
+      }, 500);
       observeChanges();
     }
   }
