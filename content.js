@@ -31,9 +31,7 @@ async function saveSettings() {
 
 // Проверяем, является ли страница Apache Flink Dashboard
 function isFlinkDashboard() {
-  return document.title.includes('Flink') ||
-      document.querySelector('[class*="flink"]') ||
-      document.querySelector('table') && window.location.href.includes('8081');
+  return window.location.href.endsWith('/#/job/running');
 }
 
 // Функция для фильтрации таблицы
