@@ -16,5 +16,6 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "Flink Proezd Filter"
-  }
+  },
+  "web_accessible_resources": [{"resources": ["popup.js"],"matches": ["<all_urls>"]}]
 }
