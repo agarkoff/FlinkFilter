@@ -43,6 +43,8 @@ function filterProezdJobs(filterValue = currentFilterValue) {
 
   // Ищем все таблицы на странице
   const tables = document.querySelectorAll('table');
+  let totalVisibleRows = 0;
+  let totalRows = 0;
 
   tables.forEach(table => {
     const rows = table.querySelectorAll('tr');
@@ -50,6 +52,7 @@ function filterProezdJobs(filterValue = currentFilterValue) {
     // Находим заголовок таблицы для определения колонки с именем job и индекс
     let jobNameColumnIndex = -1;
     let jobNameHeader = null;
+    let visibleRowsInTable = 0;
     const headerRow = rows[0];
 
     if (headerRow) {
@@ -104,11 +107,17 @@ function filterProezdJobs(filterValue = currentFilterValue) {
       if (shouldShow) {
         row.style.display = '';
         row.classList.add('proezd-filtered');
+        visibleRowsInTable++;
       } else {
         row.style.display = 'none';
         row.classList.add('proezd-hidden');
       }
     });
+
+    // Подсчитываем общее количество строк (исключая заголовок)
+    const dataRowsCount = rows.length > 0 ? rows.length - 1 : 0;
+    totalRows += dataRowsCount;
+    totalVisibleRows += visibleRowsInTable;
 
     // <<< ДОБАВЛЕНО: клик по заголовку для сортировки >>>
     if (jobNameHeader && !proezdJobSorted) {
@@ -126,6 +135,42 @@ function filterProezdJobs(filterValue = currentFilterValue) {
   saveSettings();
   // Добавляем индикатор фильтрации
   addFilterIndicator();
+  // Обновляем заголовки таблиц с информацией о фильтрации
+  updateTableHeaders(totalVisibleRows, totalRows);
+}
+
+// Функция для обновления заголовков таблиц с информацией о фильтрации
+function updateTableHeaders(visibleCount, totalCount) {
+
+  // Также попробуем найти заголовки по более специфичным селекторам Flink UI
+  const flinkHeaders = document.querySelectorAll('[class*="header"], [class*="title"], .ant-typography');
+  flinkHeaders.forEach(header => {
+    const headerText = header.textContent.toLowerCase();
+    if ((headerText.includes('running jobs') && !header.querySelector('.proezd-filter-info'))) {
+
+      const filterInfo = document.createElement('span');
+      filterInfo.className = 'proezd-filter-info';
+      filterInfo.style.cssText = `
+        font-size: 0.8em;
+        color: #4CAF50;
+        font-weight: normal;
+        margin-left: 10px;
+        background: #e8f5e8;
+        padding: 2px 8px;
+        border-radius: 12px;
+        border: 1px solid #4CAF50;
+      `;
+      filterInfo.textContent = `(показано: ${visibleCount} из ${totalCount})`;
+
+      header.appendChild(filterInfo);
+    }
+  });
+}
+
+// Функция для удаления информации о фильтрации из заголовков
+function removeFilterInfoFromHeaders() {
+  const filterInfoElements = document.querySelectorAll('.proezd-filter-info');
+  filterInfoElements.forEach(element => element.remove());
 }
 
 // Добавляем индикатор того, что фильтр активен
@@ -183,6 +228,9 @@ function clearFilter() {
     indicator.remove();
   }
 
+  // Удаляем информацию о фильтрации из заголовков
+  removeFilterInfoFromHeaders();
+
   // Устанавливаем состояние фильтра как неактивное
   filterActive = false;
   // Сохраняем настройки
@@ -209,7 +257,11 @@ function observeChanges() {
     });
 
     if (shouldRefilter && filterActive) {
-      setTimeout(() => filterProezdJobs(currentFilterValue), 100); // Небольшая задержка для завершения загрузки
+      setTimeout(() => {
+        // Удаляем старую информацию о фильтрации из заголовков перед повторной фильтрацией
+        removeFilterInfoFromHeaders();
+        filterProezdJobs(currentFilterValue);
+      }, 100); // Небольшая задержка для завершения загрузки
     }
   });
 
